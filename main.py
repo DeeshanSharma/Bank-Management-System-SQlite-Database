@@ -190,10 +190,13 @@ class Bank():
             while counter != 3:
                 if data_pin == pin:
                     query = (f"select * from Accounts where Account_no = {accNo}")
-                    self.cur.execute(query)
+                    cursor = self.cur.execute(query)
                     accDetails = self.cur.fetchall()[0]
-                    print(f"Your Details are as Follows\n{accDetails}")
-                    print("Thanks for using our service")
+                    names = [description[0] for description in cursor.description]
+                    print("Your Details are as Follows\n")
+                    for i in range(8):
+                        print(f"{names[i]} = {accDetails[i]}")
+                    print("\nThanks for using our service")
                     break
                 else:
                     print("Incorrect Pin. Please Try again.")
@@ -208,7 +211,7 @@ class Bank():
                     continue
         else:
             print("No Record Found in Our Database. Please Try Again...!")
-
+        
 if __name__ == "__main__":
     a = Bank()
     a
