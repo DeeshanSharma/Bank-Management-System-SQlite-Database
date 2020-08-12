@@ -10,15 +10,19 @@ import datetime as dt
 
 class Bank():
     def __init__(self):
-        self.conn = sq.connect("database.db")
-        self.cur = self.conn.cursor()
+        try:
+            self.conn = sq.connect("database.db")
+            self.cur = self.conn.cursor()
+        except Exception as e:
+            print(e)
         print("Main Menu")
         print("1. Withdrawl")
         print("2. Deposit")
         print("3. Balance Status") 
         print("4. Open New Account")
         print("5. See Details")
-        print("6. Exit")
+        print("6. Update Details")
+        print("7. Exit")
         while True:
             ch = int(input("Enter your choice = "))
             if ch == 1:
@@ -32,6 +36,8 @@ class Bank():
             elif ch == 5:
                 self.seeDetails()
             elif ch == 6:
+                self.updateDetails()
+            elif ch == 7:
                 print("Thanks for using our service. Do come again.")
                 self.cur.close()
                 self.conn.close()
@@ -174,7 +180,7 @@ class Bank():
         print("Conguragtulations...!! Your account is successfully created.")
         print(f"Your account number is {accno[0][0]}. Please remember this as it is very important you will require it while doing any transaction.")
 
-    def seeDetails(self,):
+    def seeDetails(self):
         accNo = int(input("Enter your Account no = "))
         query = ("select Account_no from Accounts where Account_No > 0")
         self.cur.execute(query)
@@ -197,6 +203,63 @@ class Bank():
                     for i in range(8):
                         print(f"{names[i]} = {accDetails[i]}")
                     print("\nThanks for using our service")
+                    break
+                else:
+                    print("Incorrect Pin. Please Try again.")
+                    if trails > 0:
+                        print(f"You got {trails} more incorrect trials left.")
+                    trails -= 1
+                    counter += 1
+                    if counter == 3:
+                        print("Incorrect pin trials over please start over.")
+                        break
+                    pin = int(input("Enter your pin no = "))
+                    continue
+        else:
+            print("No Record Found in Our Database. Please Try Again...!")
+
+    def updateDetails(self):
+        accNo = int(input("Enter your Account no = "))
+        query = ("select Account_no from Accounts where Account_No > 0")
+        self.cur.execute(query)
+        temp = self.cur.fetchall()
+        data_accNo = [i[0] for i in temp]
+        counter = 0
+        trails = 2
+        if accNo in data_accNo:
+            pin = int(input("Enter your pin no = "))
+            query = (f"select Pin from Accounts where Account_no = {accNo}")
+            self.cur.execute(query)
+            data_pin = self.cur.fetchall()[0][0]
+            while counter != 3:
+                if data_pin == pin:
+                    query = (f"select * from Accounts where Account_no = {accNo}")
+                    cursor = self.cur.execute(query)
+                    accDetails = self.cur.fetchall()[0]
+                    names = [description[0] for description in cursor.description]
+                    print("Your Details are as Follows\n")
+                    for i in range(8):
+                        print(f"{names[i]} = {accDetails[i]}")
+                    field = input("\nEnter name of the field you would like to update (Exactly Same & One at a time) = ")
+                    # Find the field type
+                    query = (f"select typeof({field}) from Accounts where Account_no = {accNo};")
+                    t = self.cur.execute(query)
+                    Type = t.fetchall()[0][0]
+                    if Type == 'integer':
+                        value = int(input("Enter new value for the field = "))
+                    else:
+                        value = input("Enter new value for the field = ")
+                    query = (f"update Accounts set {field} = {value} where Account_no = {accNo};")
+                    self.cur.execute(query)
+                    self.conn.commit()
+                    print("Record Successfully Updated..! New Details as follows:\n")
+                    query = (f"select * from Accounts where Account_no = {accNo}")
+                    cursor = self.cur.execute(query)
+                    accDetails = self.cur.fetchall()[0]
+                    names = [description[0] for description in cursor.description]
+                    for i in range(8):
+                        print(f"{names[i]} = {accDetails[i]}")
+                    print("\nThanks for using our service\n")
                     break
                 else:
                     print("Incorrect Pin. Please Try again.")
